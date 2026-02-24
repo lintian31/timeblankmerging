@@ -1,0 +1,33 @@
+# TimeBlank Nginx 反向代理配置
+# 将此文件复制到 /etc/nginx/sites-available/timeblank
+# 然后 ln -s /etc/nginx/sites-available/timeblank /etc/nginx/sites-enabled/
+# 最后 sudo nginx -t && sudo systemctl reload nginx
+
+server {
+    listen 80;
+    server_name your-domain.com;  # 改成你的域名或 IP
+
+    # 如果需要 HTTPS，取消下面的注释并配置证书
+    # listen 443 ssl;
+    # ssl_certificate /etc/letsencrypt/live/your-domain.com/fullchain.pem;
+    # ssl_certificate_key /etc/letsencrypt/live/your-domain.com/privkey.pem;
+
+    location / {
+        proxy_pass http://127.0.0.1:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+    }
+
+    # 静态资源缓存
+    location /_next/static/ {
+        proxy_pass http://127.0.0.1:3000;
+        expires 365d;
+        add_header Cache-Control "public, immutable";
+    }
+}
